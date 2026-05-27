@@ -1,19 +1,44 @@
+"""Helper functions for Medical Chatbot.
+
+This module contains utility functions for loading and processing PDF documents,
+text splitting, and embedding generation using HuggingFace models.
+"""
 from langchain.document_loaders import PyPDFLoader, DirectoryLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.embeddings import HuggingFaceEmbeddings
 from typing import List
 from langchain.schema import Document
+import logging
+
+logger = logging.getLogger(__name__)
 
 
-#Extract Data From the PDF File
-def load_pdf_file(data):
-    loader= DirectoryLoader(data,
-                            glob="*.pdf",
-                            loader_cls=PyPDFLoader)
-
-    documents=loader.load()
-
-    return documents
+def load_pdf_file(data: str) -> List[Document]:
+    """Extract and load PDF documents from a directory.
+    
+    Args:
+        data (str): Path to directory containing PDF files
+        
+    Returns:
+        List[Document]: List of loaded documents from PDF files
+        
+    Raises:
+        FileNotFoundError: If directory does not exist
+        Exception: If PDF loading fails
+    """
+    try:
+        logger.info(f"Loading PDF files from {data}")
+        loader = DirectoryLoader(
+            data,
+            glob="*.pdf",
+            loader_cls=PyPDFLoader
+        )
+        documents = loader.load()
+        logger.info(f"Successfully loaded {len(documents)} documents")
+        return documents
+    except Exception as e:
+        logger.error(f"Error loading PDF files: {e}")
+        raise
 
 
 
