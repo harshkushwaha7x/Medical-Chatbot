@@ -8,28 +8,52 @@ from langchain_core.prompts import ChatPromptTemplate
 from dotenv import load_dotenv
 from src.prompt import *
 import os
+import logging
+from typing import Dict, Any
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
 
 load_dotenv()
 
-PINECONE_API_KEY=os.environ.get('PINECONE_API_KEY')
-OPENAI_API_KEY=os.environ.get('OPENAI_API_KEY')
+# Load and validate API keys
+PINCONE_API_KEY = os.environ.get('PINECONE_API_KEY')
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
+
+if not PINECONE_API_KEY or not OPENAI_API_KEY:
+    logger.error("Missing required API keys. Please check .env file.")
+    raise ValueError("PINECONE_API_KEY and OPENAI_API_KEY must be set")
 
 os.environ["PINECONE_API_KEY"] = PINECONE_API_KEY
 os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
+logger.info("API keys loaded successfully")
 
 
-embeddings = download_hugging_face_embeddings()
+# Initialize embeddings
+try:
+    logger.info("Downloading HuggingFace embeddings...")
+    embeddings = download_hugging_face_embeddings()
+    logger.info("Embeddings loaded successfully")
+except Exception as e:
+    logger.error(f"Failed to load embeddings: {e}")
+    raise
 
 index_name = "medical-chatbot" 
-# Embed each chunk and upsert the embeddings into your Pinecone index.
-docsearch = PineconeVectorStore.from_existing_index(
-    index_name=index_name,
-    embedding=embeddings
-)
+try:
+    logger.info(f"Connecting to Pinecone index: {index_name}")
+    # Embed each chunk and upsert the embeddings into your Pinecone index.
+    docsearch = PineconeVectorStore.from_existing_index(
+        index_name=index_name,
+        embedding=embeddings
+    )
+    logger.info("Vector store connected successfully")
+except Exception as e:
+    logger.error(f"Failed to connect to vector store: {e}")
+    raise
 
 
 
